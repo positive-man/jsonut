@@ -52,15 +52,8 @@ class JsonSerializable:
         elif isinstance(o, set):
             return list(o)
 
-    def serialize(self):
-        return json.dumps(self, default=JsonSerializable._mapper)
-
 
 def deserialize(raw: Union[str, bytes, dict],
                 target_type: Type[T]) -> T:
     return JsonSerializable._marshall(source=raw if isinstance(raw, dict) else json.loads(raw),
                                       target=target_type)
-
-
-def serialize(obj: Union[JsonSerializable, List[JsonSerializable]]):
-    return json.dumps(obj, default=JsonSerializable._mapper)
