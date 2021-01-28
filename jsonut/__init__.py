@@ -17,27 +17,31 @@ class JsonSerializable:
         for n in cls.__dict__:
             assert hasattr(cls, n), 'The type of an attribute must be specified for ' + n
 
-    def serialize(self):
+    def serialize(self, indent=2):
         return json.dumps(self,
                           default=self._mapper,
-                          indent=2).encode(encoding='utf-8')
+                          indent=indent)
 
     @classmethod
-    def _marshall(cls,
-                  source: any,
-                  target: Type[T]) -> T:
+    def _deserialize(cls,
+                     source: any,
+                     type_hint: Type[T]) -> T:
         if isinstance(source, list):
             result = []
             for element in source:  # marshall each element
                 result.append(
-                    JsonSerializable._marshall(element, target.__args__[0] if hasattr(target, '__args__') else any))
+                    JsonSerializable._deserialize(
+                        element,
+                        type_hint.__args__[0] if hasattr(type_hint, '__args__') else any
+                    )
+                )
         elif isinstance(source, dict):
             # noinspection PyBroadException
-            result = target()  # create an instance of target type
+            result = type_hint()  # create an instance of target type
             try:
-                for n, t in target.__annotations__.items():  # marshall each item
+                for n, t in type_hint.__annotations__.items():  # marshall each item
                     if n in source.keys():
-                        result.__setattr__(n, JsonSerializable._marshall(source.get(n), t))
+                        result.__setattr__(n, JsonSerializable._deserialize(source.get(n), t))
             except:
                 result = source
         else:
@@ -54,6 +58,6 @@ class JsonSerializable:
 
 
 def deserialize(raw: Union[str, bytes, dict],
-                target_type: Type[T]) -> T:
-    return JsonSerializable._marshall(source=raw if isinstance(raw, dict) else json.loads(raw),
-                                      target=target_type)
+                type_hint: Type[T]) -> T:
+    return JsonSerializable._deserialize(source=raw if isinstance(raw, dict) else json.loads(raw),
+                                         type_hint=type_hint)
