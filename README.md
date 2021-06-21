@@ -1,4 +1,4 @@
-#JSONUT
+# JSONUT
 *jsonut* can be used to convert json objects to Python data class objects and vice versa.
 
 ## How to Use
